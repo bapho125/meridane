@@ -99,6 +99,7 @@ h1.hero-title{font-family:var(--mincho);font-weight:500;
   font-size:clamp(46px,9vw,120px);line-height:1.14;letter-spacing:.06em;
   color:#f3efe6;text-shadow:0 2px 50px rgba(0,0,0,.55)}
 h1.hero-title .ln{display:block;overflow:hidden}
+@media(max-width:400px){h1.hero-title{font-size:42px;letter-spacing:.04em}}
 .hero-sub{margin:34px auto 0;max-width:34em;font-weight:400;
   font-size:clamp(14px,1.7vw,17px);line-height:2.15;color:var(--ink2);letter-spacing:.05em}
 .hero-sub .ph{padding:0 .05em}
@@ -545,35 +546,32 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
     <div class="viewer-wrap reveal">
       <div class="viewer-ring" aria-hidden="true"></div>
       <!-- 実3Dモデル(CC BY 4.0)を <model-viewer> で表示。
-           camera-controls=ドラッグで見回し / auto-rotate=放置で自動回転 / autoplay=内蔵アニメ。
+           camera-controls=ドラッグで見回し / auto-rotate=放置で自動回転。
            loading="lazy"。読込中および非対応環境では slot="poster"（実写＋ダーク）を表示。
 
-           ▼▼ v2 申し送り：3Dモデル差し替えは「保留（要CEO判断）」▼▼
-           支給された assets/3d/LuxuryWristwatch.glb は、ローカル実描画（Playwright/Chromium）で
-           文字盤に実ブランド「SEIKO GPS ASTRON」の刻印が確認された（=架空ブランドLPの大前提／
-           v1でOMEGA写真を除外した基準に抵触）。加えて緑スポーティGPS路線で本コピー（機械式・静けさ）
-           とも不一致のため、本セッションでは組み込まず、商標・世界観の問題が解消するまで旧モデルを据置く。
-           解消後に新モデルへ差し替える場合の推奨設定（実描画で文字盤が大きく美しく収まった値）：
-             src="assets/3d/LuxuryWristwatch.glb"
-             camera-orbit="25deg 70deg auto"  field-of-view="30deg"  exposure="1.1"
-             ※ 新モデルは animations=0（autoplay不可）/ variants=無（variant-name不可）→ 両属性は外す。
-             ※ Draco+WebP圧縮。model-viewer@3.5.0はデコーダをCDNから読込むため、実機で表示確認必須。 -->
+           モデル: assets/3d/VintageWatch.glb（三針ドレスウォッチ・白文字盤ローマ数字・ゴールドケース×
+           茶レザーストラップ・CC BY 4.0 / 作者 uday）。支給の3色版（ゴールド/黒/シルバー横並び）を
+           gltf-transformでゴールド1本に絞り原点へ再センタリングした派生（753KB）。本LPは単一の名品
+           Réf. M-1874 を主役に据える構成のため1本立てが世界観に合致。3色の元ファイルは
+           Karakuri/research/lancers-5575278-watch-lp/VintageWatch_3color_source.glb に保管。
+           ※ このモデルは animations=0（autoplay不可）/ KHR_materials_variants=無（variant-name不可）→ 両属性は外した。
+           ※ Draco+WebP圧縮。model-viewer@3.5.0はデコーダをCDNから読込むため実機で表示確認必須（本セッションで実描画確認済）。
+           ※ カメラ値は正方形ビューワ(1:1・円リング)内での実描画で「白文字盤とローマ数字が最初に美しく正面に収まる」よう詰めた。 -->
       <model-viewer id="mv"
-        src="assets/3d/ChronographWatch.glb"
-        variant-name="Midnight Gold"
-        alt="MÉRIDANE のクロノグラフを3Dで見回すインタラクティブ表示。ドラッグで回転、放置で自動回転する"
+        src="assets/3d/VintageWatch.glb"
+        alt="MÉRIDANE の三針ドレスウォッチを3Dで見回すインタラクティブ表示。白文字盤にローマ数字、ゴールドの側と革ストラップ。ドラッグで回転、放置で自動回転する"
         camera-controls
         auto-rotate
         auto-rotate-delay="2000"
         rotation-per-second="14deg"
-        camera-orbit="20deg 78deg 105%"
+        camera-orbit="12deg 78deg auto"
+        field-of-view="30deg"
         min-camera-orbit="auto 55deg auto"
         max-camera-orbit="auto 100deg auto"
         interaction-prompt="none"
-        autoplay
         disable-tap
         shadow-intensity="1"
-        exposure="1.0"
+        exposure="1.1"
         environment-image="neutral"
         loading="lazy"
         reveal="auto">
@@ -581,7 +579,7 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
           <img src="assets/detail-warm.jpg" alt="時計のムーブメントのマクロ写真">
         </div>
       </model-viewer>
-      <div class="mv-badge">Réf. M-1874 · Midnight Gold</div>
+      <div class="mv-badge">Réf. M-1874 · Or Jaune</div>
     </div>
 
     <div class="hint reveal">
@@ -680,7 +678,7 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
 
 <footer>
   <p class="disc">本ページは、開発チーム Karakuri が制作したポートフォリオ用のサンプルです。「MÉRIDANE」は本サンプルのために創作した架空のブランドであり、実在するいかなる時計ブランドとも関係ありません。掲載写真・3Dモデルはブランドの世界観を伝えるためのイメージであり、特定の時計製品の作例を示すものではありません。写真：Unsplash（商用利用可・帰属不要）。詳細な出典は同梱の制作メモに記載しています。</p>
-  <p class="disc" style="margin-top:14px;opacity:.85">3D model: “Chronograph Watch” © 2025 Darmstadt Graphics Group GmbH (model &amp; textures by Eric Chadwick), from the Khronos glTF Sample Assets. Based on “Chronograph Watch Mudmaster” by graphiccompressor. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" style="color:var(--muted);text-decoration:underline">CC BY 4.0</a>.</p>
+  <p class="disc" style="margin-top:14px;opacity:.85">3D model: based on “<a href="https://sketchfab.com/3d-models/vintage-watch-7322039aae6642e0a3a9c8361f174dd6" rel="noopener" style="color:var(--muted);text-decoration:underline">Vintage Watch</a>” by <a href="https://sketchfab.com/udayjeet" rel="noopener" style="color:var(--muted);text-decoration:underline">uday</a>, adapted (single colorway) for this sample. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" style="color:var(--muted);text-decoration:underline">CC BY 4.0</a>.</p>
   <div class="cr">Sample brand content · Crafted by Karakuri</div>
 </footer>
 
@@ -749,6 +747,8 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
     motion: "(prefers-reduced-motion: no-preference)",
     isDesktop: "(min-width: 821px)"
   }, function(ctx){
+    // matchMediaは複数条件だとmotion=falseでもコールバックが走る仕様のため明示ガード
+    if (ctx.conditions.motion === false) return;
     var isDesktop = ctx.conditions.isDesktop;
 
     // ---- Lenis を GSAP ticker / ScrollTrigger と結線 ----
