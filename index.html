@@ -890,15 +890,16 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
         // 横スクロール量＝トラック幅 − ビューポート幅。末尾は「もう新しいカードが現れないのに
         // 最後の1枚を画面左端までドラッグし続ける」無言の余りが出るため、その分(TAIL_TRIM)を削って
         // 最後のカードが中央寄りで着地するようにする（＝pin出口の空白を除去・実GPU計測で589px→ほぼ0）。
-        var TAIL_TRIM = 0.20;
-        var getShift = function(){ return Math.max(0, hTrack.scrollWidth - window.innerWidth * (1 + TAIL_TRIM)); };
-        // 末尾の余韻（dwell）：最後の年号カード（1991／今日）が着地したあと、完成した年表を
-        // 一呼吸そのまま画面に見せてからピンを解除する。＝「表示された瞬間に画面が次へ行く」CEO指摘の解消。
-        // ピン距離の DWELL_FRAC ぶんを、横パンではなく“最終状態の静止保持”に充てる。
-        // これは無言のデッド区間（何も見えない空白）ではなく、完成した年表が画面内に静止して見えている区間。
-        // 0.22＝1440幅で約514pxの静止余韻（＝没入ステージの余韻 約510px と px でそろえる＝体感の停止距離を統一）。
-        // ※本要素はCEOが名指しした箇所のため、二演出のうち短い側にならないよう px 基準で十分な一呼吸を確保。
-        var DWELL_FRAC = 0.22;
+        // 横パン量＝トラック全幅 − ビューポート幅（実寸）。＝最終カード「今日」が右端まで完全に
+        // 画面内へ入り切る位置（トラック右の 8vw パディングがそのまま右余白になる）。
+        // ※v5/v6の比率トリム(TAIL_TRIM=0.20)は「幅×0.2」ぶん余計にパンを削るため、広い画面ほど
+        //   最終カードが画面外のまま終わり「今日が映らない」不具合になっていた（CEO実機指摘の主因）。→ 廃止。
+        //   scrollWidth・innerWidth とも invalidateOnRefresh でリサイズ時に再評価される（下の ST 設定）。
+        var getShift = function(){ return Math.max(0, hTrack.scrollWidth - window.innerWidth); };
+        // 末尾の余韻（dwell）：「今日」が入り切ったあと、完成した年表を画面内に静止させたまま保持してから解除。
+        // ＝「最終状態に着いた瞬間に画面が次へ行く」の解消。無言のデッド区間（空白）ではなく“完成した絵の静止”。
+        // ピン距離の DWELL_FRAC ぶんを静止に充てる（没入ステージの余韻≒18.4% と比率をそろえて体感を統一）。
+        var DWELL_FRAC = 0.19;
         var hzTween = gsap.timeline({
           scrollTrigger:{
             trigger: heritage.querySelector(".h-stage"),
@@ -912,9 +913,15 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
                .to({}, { duration: DWELL_FRAC }); // 末尾の余韻＝最後のカードを画面内に完全に留めたまま静止保持
         track(hzTween);
         // マイルストーンが横から入るとき：大きく昇り、年号がスッと立ち上がる（“おっ”＝年号のパンチ）
-        gsap.utils.toArray(".heritage.is-hz .milestone").forEach(function(ms){
+        var msAll = gsap.utils.toArray(".heritage.is-hz .milestone");
+        msAll.forEach(function(ms, idx){
+          var isLast = (idx === msAll.length - 1);
           var yr = ms.querySelector(".yr");
-          var tl = gsap.timeline({ scrollTrigger:{ trigger:ms, start:"left 88%", end:"left 42%", scrub:.7, containerAnimation: hzTween } });
+          // 中間カードは中央付近(left 42%)で入り切る。最終カード「今日」はパンが中央手前で止まる（右端まで
+          // 見せ切るための設計）ため、到達しない 42% を終点にすると出現が半端なまま（薄い）で終わる。
+          // →最終カードだけ、実際に到達する手前の閾値(left 80%)で出現を完了させ、静止余韻中は完全表示・不透明で留める。
+          var endPos = isLast ? "left 80%" : "left 42%";
+          var tl = gsap.timeline({ scrollTrigger:{ trigger:ms, start:"left 88%", end:endPos, scrub:.7, containerAnimation: hzTween } });
           tl.from(ms, { opacity:0, y:54, duration:1, ease:"power3.out" });
           if (yr) tl.from(yr, { scale:.62, opacity:0, filter:"blur(6px)", duration:.9, ease:"power2.out" }, "-=.7")
                     .from(yr, { letterSpacing:"0.3em", duration:.9, ease:"power2.out" }, "<");
