@@ -859,14 +859,14 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       // 立ち上がりを大きく：下から大きく昇り、字間も一度開いて締まる
       gsap.set(lns, { autoAlpha:0, y:64, letterSpacing:"0.5em" });
       gsap.set(dot, { autoAlpha:0, scale:.2 });
-      var tin = gsap.timeline({ scrollTrigger:{ trigger:sec, start:"top 68%", end:"center 56%", scrub:.6 } });
+      var tin = gsap.timeline({ scrollTrigger:{ trigger:sec, start:"top 85%", end:"center 80%", scrub:.6 } });
       tin.to(dot, { autoAlpha:.75, scale:1, duration:.4 })
          .to(lns, { autoAlpha:1, y:0, letterSpacing:"0.13em", duration:1, stagger:.22 }, "-=.1");
       track(tin);
       // 去り際：大きく沈める（重厚に・振幅UP）
       track(gsap.to(sec.querySelector(".il-in"), {
-        autoAlpha:.1, y:-70, ease:"none",
-        scrollTrigger:{ trigger:sec, start:"center center", end:"bottom top", scrub:true }
+        autoAlpha:.2, y:-70, ease:"none",
+        scrollTrigger:{ trigger:sec, start:"center 22%", end:"bottom top", scrub:true }
       }));
     });
 
@@ -1065,6 +1065,9 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       });
     });
 
+    // 幕間はHéritageのpinより先に登録されるため、sortでrefresh処理順を
+    // ページ出現順に並べ直さないとpin spacer分(約2100px)が位置計算から漏れる
+    ScrollTrigger.sort();
     ScrollTrigger.refresh();
 
     // OS設定・ブレークポイントのライブ切替時の後片付け
