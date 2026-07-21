@@ -546,7 +546,10 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
     <div class="viewer-wrap reveal">
       <div class="viewer-ring" aria-hidden="true"></div>
       <!-- 実3Dモデル(CC BY 4.0)を <model-viewer> で表示。
-           camera-controls=ドラッグで見回し / auto-rotate=放置で自動回転。
+           camera-controls=ドラッグで全周見回し / 放置中はJSが「正面アーク」をゆっくり往復（下部script参照）。
+           ※360°自動回転はしない：このモデルはストラップが輪に閉じており、真横〜背面では
+             暗い革の輪＋斜めで暗転した文字盤になるため（=旧版が“壊れて見えた”主因）。
+             自動モーションは文字盤が映える正面±に限定し、ドラッグでは全周を確かめられる。
            loading="lazy"。読込中および非対応環境では slot="poster"（実写＋ダーク）を表示。
 
            モデル: assets/3d/VintageWatch.glb（三針ドレスウォッチ・白文字盤ローマ数字・ゴールドケース×
@@ -559,19 +562,17 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
            ※ カメラ値は正方形ビューワ(1:1・円リング)内での実描画で「白文字盤とローマ数字が最初に美しく正面に収まる」よう詰めた。 -->
       <model-viewer id="mv"
         src="assets/3d/VintageWatch.glb"
-        alt="MÉRIDANE の三針ドレスウォッチを3Dで見回すインタラクティブ表示。白文字盤にローマ数字、ゴールドの側と革ストラップ。ドラッグで回転、放置で自動回転する"
+        alt="MÉRIDANE の三針ドレスウォッチを3Dで見回すインタラクティブ表示。白文字盤にローマ数字、ゴールドの側と革ストラップ。ドラッグで回転、放置で静かに揺れる"
         camera-controls
-        auto-rotate
-        auto-rotate-delay="2000"
-        rotation-per-second="14deg"
-        camera-orbit="12deg 78deg auto"
+        camera-orbit="6deg 76deg auto"
+        interpolation-decay="180"
         field-of-view="30deg"
-        min-camera-orbit="auto 55deg auto"
-        max-camera-orbit="auto 100deg auto"
+        min-camera-orbit="auto 52deg auto"
+        max-camera-orbit="auto 102deg auto"
         interaction-prompt="none"
         disable-tap
         shadow-intensity="1"
-        exposure="1.1"
+        exposure="1.25"
         environment-image="neutral"
         loading="lazy"
         reveal="auto">
@@ -697,9 +698,38 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
 (function(){
   var prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ---- 3D: reduced-motion では自動回転と内蔵アニメを止める（ドラッグ操作は残す） ----
+  // ---- 3D: 放置中は「正面アーク」をゆっくり往復させる（=常に美しい文字盤側を見せる） ----
+  //  このモデルはストラップが輪に閉じているため、360°自動回転させると回転の3/4で
+  //  暗い革の輪＋斜めで暗転した文字盤が写ってしまう（＝“壊れて見える”主因）。
+  //  そこで自動モーションは正面±の上品なアークに限定し、文字盤が常に映えるようにする。
+  //  ドラッグ（camera-controls）は全周そのまま＝どの角度からも確かめられる。
+  //  reduced-motion時はこの往復を一切起動しない（＝ヒーロー角で静止・ドラッグのみ）。
   var mv = document.getElementById("mv");
-  if (mv && prefersReduce){ mv.removeAttribute("auto-rotate"); mv.removeAttribute("autoplay"); }
+  if (mv){
+    var HERO = 6;          // 正面ヒーロー方位角(deg)
+    var AMP_L = 44;        // 左振り幅（文字盤が読める範囲）
+    var AMP_R = 46;        // 右振り幅
+    var PHI = 76;          // 極角（見下ろし気味で立体感）
+    var PERIOD = 17000;    // 1往復(ms)＝ゆっくり静かに
+    var lastUser = 0, running = false, rafId = 0, t0 = 0;
+    // ユーザーがドラッグしたら往復を一時停止（3秒アイドルで再開）
+    mv.addEventListener("camera-change", function(e){
+      if (e.detail && e.detail.source === "user-interaction") lastUser = performance.now();
+    });
+    function sweep(now){
+      rafId = requestAnimationFrame(sweep);
+      if (performance.now() - lastUser < 3000) { t0 = now; return; } // 操作中/直後は静止
+      var ph = ((now - t0) % PERIOD) / PERIOD;          // 0..1
+      var s = Math.sin(ph * Math.PI * 2);               // -1..1（正弦＝端で滑らかに折り返す）
+      var theta = HERO + (s >= 0 ? s * AMP_R : s * AMP_L);
+      mv.cameraOrbit = theta.toFixed(2) + "deg " + PHI + "deg auto";
+    }
+    function startSweep(){ if (running || prefersReduce) return; running = true; t0 = performance.now(); rafId = requestAnimationFrame(sweep); }
+    if (!prefersReduce){
+      if (mv.loaded) startSweep();
+      else mv.addEventListener("load", startSweep, { once:true });
+    }
+  }
 
   // ---- ヘッダー状態＆スクロール進捗（アニメ設定に関係なく動く軽い装飾） ----
   var topbar = document.getElementById("topbar");
@@ -783,9 +813,9 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       .from(".hero-sub", { opacity:0, y:18, duration:1.0 }, "-=.5")
       .from(".scrollcue", { opacity:0, duration:1.0 }, "-=.3");
 
-    // ---- HERO 背景：ゆっくりパララックス＋スケール ----
+    // ---- HERO 背景：パララックス＋スケール（振幅を大きく：奥へ深く沈む） ----
     track(gsap.to(".hero-bg img", {
-      yPercent:16, scale:1.08, ease:"none",
+      yPercent:30, scale:1.22, ease:"none",
       scrollTrigger:{ trigger:".hero", start:"top top", end:"bottom top", scrub:true }
     }));
 
@@ -793,15 +823,16 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
     gsap.utils.toArray("[data-il]").forEach(function(sec){
       var lns = sec.querySelectorAll(".il .ln");
       var dot = sec.querySelector(".dot");
-      gsap.set(lns, { autoAlpha:0, y:26 });
-      gsap.set(dot, { autoAlpha:0, scale:.4 });
-      var tin = gsap.timeline({ scrollTrigger:{ trigger:sec, start:"top 62%", end:"center center", scrub:.6 } });
-      tin.to(dot, { autoAlpha:.7, scale:1, duration:.4 })
-         .to(lns, { autoAlpha:1, y:0, duration:1, stagger:.18 }, "-=.1");
+      // 立ち上がりを大きく：下から大きく昇り、字間も一度開いて締まる
+      gsap.set(lns, { autoAlpha:0, y:64, letterSpacing:"0.5em" });
+      gsap.set(dot, { autoAlpha:0, scale:.2 });
+      var tin = gsap.timeline({ scrollTrigger:{ trigger:sec, start:"top 68%", end:"center 56%", scrub:.6 } });
+      tin.to(dot, { autoAlpha:.75, scale:1, duration:.4 })
+         .to(lns, { autoAlpha:1, y:0, letterSpacing:"0.13em", duration:1, stagger:.22 }, "-=.1");
       track(tin);
-      // 去り際：ゆっくり沈める（重厚に）
+      // 去り際：大きく沈める（重厚に・振幅UP）
       track(gsap.to(sec.querySelector(".il-in"), {
-        autoAlpha:.15, y:-24, ease:"none",
+        autoAlpha:.1, y:-70, ease:"none",
         scrollTrigger:{ trigger:sec, start:"center center", end:"bottom top", scrub:true }
       }));
     });
@@ -818,7 +849,7 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
         heritage.classList.add("is-hz");
         // 横スクロール量＝トラック幅 − ビューポート幅
         var getShift = function(){ return hTrack.scrollWidth - window.innerWidth; };
-        track(gsap.to(hTrack, {
+        var hzTween = gsap.to(hTrack, {
           x: function(){ return -getShift(); },
           ease:"none",
           scrollTrigger:{
@@ -827,13 +858,16 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
             end: function(){ return "+=" + getShift(); },
             scrub: 1, pin: true, invalidateOnRefresh: true, anticipatePin: 1
           }
-        }));
-        // マイルストーンが横から入るときに軽く立ち上げる
+        });
+        track(hzTween);
+        // マイルストーンが横から入るとき：大きく昇り、年号がスッと立ち上がる（“おっ”＝年号のパンチ）
         gsap.utils.toArray(".heritage.is-hz .milestone").forEach(function(ms){
-          track(gsap.from(ms, {
-            opacity:0, y:24, duration:.9, ease:"power2.out",
-            scrollTrigger:{ trigger:ms, start:"left 92%", containerAnimation: triggers[triggers.length-1] && null }
-          }));
+          var yr = ms.querySelector(".yr");
+          var tl = gsap.timeline({ scrollTrigger:{ trigger:ms, start:"left 88%", end:"left 42%", scrub:.7, containerAnimation: hzTween } });
+          tl.from(ms, { opacity:0, y:54, duration:1, ease:"power3.out" });
+          if (yr) tl.from(yr, { scale:.62, opacity:0, filter:"blur(6px)", duration:.9, ease:"power2.out" }, "-=.7")
+                    .from(yr, { letterSpacing:"0.3em", duration:.9, ease:"power2.out" }, "<");
+          track(tl);
         });
       } else {
         // モバイル：縦積みの年表を1枚ずつ静かに出す
@@ -855,33 +889,35 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
 
       gsap.set(bgs, { autoAlpha:0 });
       gsap.set(bgs[0], { autoAlpha:1 });
-      gsap.set(caps, { autoAlpha:0, y:30 });
+      gsap.set(caps, { autoAlpha:0, y:40 });
       gsap.set(caps[0], { autoAlpha:1, y:0 });
-      // 章1は「マスクが開く」＝clip-pathで時計が現れる（ズーム一辺倒をやめる）
-      gsap.set(watch, { scale:1, rotate:0, xPercent:0 });
-      if (wfig) gsap.set(wfig, { clipPath:"inset(16% 16% 16% 16% round 50%)" });
+      // 【おっ #1】章1導入＝文字盤の超拡大 → 引きで時計全体が現れる。
+      //  時計は大きく寄った状態(scale 2.7・中心を小さな円にクリップ)から始まり、
+      //  スクロールで一気に引いて全体像へ。マスクも同時に開く。
+      gsap.set(watch, { scale:2.7, rotate:-6, xPercent:0 });
+      if (wfig) gsap.set(wfig, { clipPath:"inset(34% 34% 34% 34% round 50%)" });
 
       var stl = gsap.timeline({
         scrollTrigger:{ trigger:stage, start:"top top", end:"bottom bottom", scrub:1 }
       });
-      // 章1：マスクが静かに開く（重厚・遅い）
-      if (wfig) stl.to(wfig, { clipPath:"inset(0% 0% 0% 0% round 50%)", duration:1.2, ease:"none" });
-      else stl.to({}, { duration:1.2 });
-      stl.to({}, { duration:.8 }); // 章1保持
-      // 章1 -> 章2：背景クロスフェード＋時計はわずかに横へパン（scaleは使わない）
-      stl.to(caps[0], { autoAlpha:0, y:-30, duration:.5 }, ">")
+      // 章1：超拡大からの引き（大きな振幅・上品なpower2で滑らかに減速／バウンス無し）
+      if (wfig) stl.to(wfig, { clipPath:"inset(0% 0% 0% 0% round 50%)", duration:1.4, ease:"power2.out" }, 0);
+      stl.to(watch, { scale:1, rotate:0, duration:1.6, ease:"power2.out" }, 0);
+      stl.to({}, { duration:.7 }); // 章1保持
+      // 章1 -> 章2：背景クロスフェード＋時計を大きく左へパン＋傾ける（振幅3倍）
+      stl.to(caps[0], { autoAlpha:0, y:-44, duration:.5 }, ">")
          .to(bgs[0],  { autoAlpha:0, duration:1 }, "<")
          .to(bgs[1],  { autoAlpha:1, duration:1 }, "<")
-         .to(watch,   { xPercent:-6, rotate:-3, duration:1.2, ease:"none" }, "<")
+         .to(watch,   { xPercent:-20, rotate:-8, scale:1.06, duration:1.3, ease:"power1.inOut" }, "<")
          .to(caps[1], { autoAlpha:1, y:0, duration:.6 }, "-=.4");
-      stl.to({}, { duration:1 }); // 章2保持
-      // 章2 -> 章3：反対へパン＋ごく僅かに寄る（重厚さ優先）
-      stl.to(caps[1], { autoAlpha:0, y:-30, duration:.5 }, ">")
+      stl.to({}, { duration:.9 }); // 章2保持
+      // 章2 -> 章3：反対へ大きくパン＋寄る（重厚さは維持しつつ動きははっきり）
+      stl.to(caps[1], { autoAlpha:0, y:-44, duration:.5 }, ">")
          .to(bgs[1],  { autoAlpha:0, duration:1 }, "<")
          .to(bgs[2],  { autoAlpha:1, duration:1 }, "<")
-         .to(watch,   { xPercent:5, rotate:3, scale:1.08, duration:1.2, ease:"none" }, "<")
+         .to(watch,   { xPercent:18, rotate:7, scale:1.2, duration:1.3, ease:"power1.inOut" }, "<")
          .to(caps[2], { autoAlpha:1, y:0, duration:.6 }, "-=.4");
-      stl.to({}, { duration:1 }); // 章3保持
+      stl.to({}, { duration:.9 }); // 章3保持
       track(stl);
     }
 
@@ -899,14 +935,20 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
           scrollTrigger:{ trigger:part, start:"top 78%" } }));
       }
       if (img){
-        gsap.set(img, { scale:1.16 });
+        gsap.set(img, { scale:1.42 });
         track(gsap.to(img, { scale:1, ease:"none",
           scrollTrigger:{ trigger:part, start:"top bottom", end:"bottom top", scrub:1 } }));
       }
       if (txt){
-        track(gsap.from(txt.children, {
-          opacity:0, x: fromLeft ? 40 : -40, y:16, duration:1, ease:"power2.out", stagger:.1,
-          scrollTrigger:{ trigger:part, start:"top 74%" } }));
+        // テキストは逆側から大きく流れ込む（振幅UP）／番号は特大でスッと立ち上がる
+        var no = txt.querySelector(".p-no");
+        var rest = Array.prototype.filter.call(txt.children, function(c){ return c !== no; });
+        if (no) track(gsap.from(no, {
+          opacity:0, x: fromLeft ? 96 : -96, scale:.6, duration:1.1, ease:"power3.out",
+          scrollTrigger:{ trigger:part, start:"top 76%" } }));
+        track(gsap.from(rest, {
+          opacity:0, x: fromLeft ? 80 : -80, y:20, duration:1.05, ease:"power2.out", stagger:.12,
+          scrollTrigger:{ trigger:part, start:"top 72%" } }));
       }
     });
 
@@ -922,11 +964,11 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       var lbg = atelier.querySelector(".l-bg");
       var lfg = atelier.querySelector(".l-fg");
       var acopy = atelier.querySelector(".a-copy");
-      if (lbg) track(gsap.fromTo(lbg, { yPercent:-8 }, { yPercent:8, ease:"none",
+      if (lbg) track(gsap.fromTo(lbg, { yPercent:-16, scale:1.12 }, { yPercent:20, ease:"none",
         scrollTrigger:{ trigger:atelier, start:"top bottom", end:"bottom top", scrub:true } }));
-      if (lfg) track(gsap.fromTo(lfg, { yPercent:14 }, { yPercent:-14, ease:"none",
+      if (lfg) track(gsap.fromTo(lfg, { yPercent:30 }, { yPercent:-30, ease:"none",
         scrollTrigger:{ trigger:atelier, start:"top bottom", end:"bottom top", scrub:true } }));
-      if (acopy) track(gsap.fromTo(acopy, { y:40, autoAlpha:.4 }, { y:-40, autoAlpha:1, ease:"none",
+      if (acopy) track(gsap.fromTo(acopy, { y:80, autoAlpha:.25 }, { y:-64, autoAlpha:1, ease:"none",
         scrollTrigger:{ trigger:atelier, start:"top bottom", end:"center center", scrub:true } }));
     }
 
@@ -936,14 +978,16 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       track(gsap.from(".galerie .g-head", {
         opacity:0, y:30, duration:1.0, ease:"power2.out",
         scrollTrigger:{ trigger:".galerie .g-head", start:"top 84%" } }));
-      mosaicTiles.forEach(function(tile){
+      mosaicTiles.forEach(function(tile, i){
         var img = tile.querySelector("img");
-        if (img){ gsap.set(img, { scale:1.12 });
+        if (img){ gsap.set(img, { scale:1.34 });
           track(gsap.to(img, { scale:1, ease:"none",
             scrollTrigger:{ trigger:tile, start:"top bottom", end:"bottom top", scrub:1 } })); }
+        // タイルごとに開く向きを変えて“順に浮かぶ”密度を上げる（左右/上下交互）
+        var openFrom = (i % 2 === 0) ? "inset(0% 60% 0% 0%)" : "inset(24% 0% 24% 0%)";
         track(gsap.from(tile, {
-          clipPath:"inset(14% 0% 14% 0%)", opacity:0, y:26, duration:1.1, ease:"power2.out",
-          scrollTrigger:{ trigger:tile, start:"top 90%" } }));
+          clipPath:openFrom, opacity:0, y:52, duration:1.15, ease:"power3.out",
+          scrollTrigger:{ trigger:tile, start:"top 92%" } }));
       });
     }
 
@@ -957,21 +1001,35 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       });
 
     // ---- CODA 画像：内部をゆっくり寄せる＋幕開き ----
-    gsap.utils.toArray(".detail-grid .frame").forEach(function(fr){
+    gsap.utils.toArray(".detail-grid .frame").forEach(function(fr, i){
       var img = fr.querySelector("img");
-      if (img){ gsap.set(img, { scale:1.14 });
+      if (img){ gsap.set(img, { scale:1.28 });
         track(gsap.to(img, { scale:1, ease:"none",
           scrollTrigger:{ trigger:fr, start:"top bottom", end:"bottom top", scrub:1 } })); }
       track(gsap.from(fr, {
-        clipPath:"inset(12% 0% 12% 0%)", opacity:.3, duration:1.4, ease:"power2.out",
+        clipPath: (i % 2 === 0) ? "inset(0% 55% 0% 0%)" : "inset(0% 0% 0% 55%)",
+        opacity:.2, duration:1.4, ease:"power3.out",
         scrollTrigger:{ trigger:fr, start:"top 86%" } }));
     });
 
-    // ---- 仕様の数字：スタッガー ----
+    // ---- 仕様の数字：スタッガー＋【おっ #2】カウントアップ（0→目標値） ----
     gsap.utils.toArray(".specs").forEach(function(grp){
       track(gsap.from(grp.querySelectorAll(".s"), {
-        opacity:0, y:26, duration:1.0, ease:"power2.out", stagger:.14,
+        opacity:0, y:40, duration:1.0, ease:"power2.out", stagger:.16,
         scrollTrigger:{ trigger:grp, start:"top 84%" } }));
+      gsap.utils.toArray(grp.querySelectorAll(".n")).forEach(function(n){
+        var small = n.querySelector("small");
+        var suffix = small ? small.outerHTML : "";
+        var target = parseInt((n.textContent || "").replace(/[^0-9]/g, ""), 10);
+        if (!target) return;
+        var obj = { v:0 };
+        track(gsap.to(obj, {
+          v: target, duration:1.7, ease:"power2.out",
+          scrollTrigger:{ trigger:n, start:"top 88%" },
+          onUpdate:function(){ n.innerHTML = Math.round(obj.v) + suffix; },
+          onComplete:function(){ n.innerHTML = target + suffix; }
+        }));
+      });
     });
 
     ScrollTrigger.refresh();
