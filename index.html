@@ -919,8 +919,9 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       var watch = document.getElementById("stageWatch");
       var wfig = watch ? watch.querySelector("figure") : null;
 
+      // 章1の写真(landscape-alps)もピン開始までは見せない（2026-07-23 CEO指摘「スクロール前から写真が見えている」対策。
+      // 到達前は闇＋クリップされた時計だけ→ピン開始後、引きの演出と同時に写真がフェードインする）
       gsap.set(bgs, { autoAlpha:0 });
-      gsap.set(bgs[0], { autoAlpha:1 });
       gsap.set(caps, { autoAlpha:0, y:40 });
       gsap.set(caps[0], { autoAlpha:1, y:0 });
       // 【おっ #1】章1導入＝文字盤の超拡大 → 引きで時計全体が現れる。
@@ -942,6 +943,7 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
       // 章1：超拡大からの引き（大きな振幅・上品なpower2で滑らかに減速／バウンス無し）
       if (wfig) stl.to(wfig, { clipPath:"inset(0% 0% 0% 0% round 50%)", duration:1.4, ease:"power2.out" }, 0);
       stl.to(watch, { scale:1, rotate:0, duration:1.6, ease:"power2.out" }, 0);
+      stl.to(bgs[0], { autoAlpha:1, duration:1.2, ease:"power1.inOut" }, 0); // 引きと同時に章1の世界が明ける
       stl.to({}, { duration:.7 }); // 章1保持
       // 章1 -> 章2：背景クロスフェード＋時計を大きく左へパン＋傾ける（振幅3倍）
       stl.to(caps[0], { autoAlpha:0, y:-44, duration:.5 }, ">")
