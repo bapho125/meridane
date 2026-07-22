@@ -275,7 +275,7 @@ model-viewer{width:100%;height:100%;--poster-color:transparent;
   border:1px solid rgba(220,199,158,.22);overflow:hidden;
   box-shadow:0 40px 120px -40px rgba(0,0,0,.9),inset 0 0 70px rgba(0,0,0,.7)}
 .mv-fallback{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:grid;place-items:center}
-.mv-fallback img{width:100%;height:100%;object-fit:cover;filter:saturate(.7) contrast(1.08) brightness(.8)}
+.mv-fallback img,.mv-fallback video{width:100%;height:100%;object-fit:cover;filter:saturate(.7) contrast(1.08) brightness(.8)}
 .mv-fallback::after{content:"";position:absolute;inset:0;
   background:radial-gradient(circle,transparent 45%,rgba(0,0,0,.72) 100%)}
 .mv-badge{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);z-index:4;
@@ -575,17 +575,24 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
   <div class="wrap">
     <span class="eyebrow">Immersion</span>
     <h2 class="reveal">肉眼の、その先へ。</h2>
-    <p class="sub reveal"><span class="ph">受け石の赤、</span><span class="ph">真鍮の光。</span><br><span class="ph">拡大鏡だけが知っている、</span><span class="ph">手仕事の痕跡。</span></p>
+    <p class="sub reveal"><span class="ph">受け石の赤、</span><span class="ph">真鍮の光。</span><br><span class="ph">息づく機構を、</span><span class="ph">拡大鏡の距離で。</span></p>
 
     <div class="viewer-wrap reveal">
       <div class="viewer-ring" aria-hidden="true"></div>
       <!-- 3D(<model-viewer>)は2026-07-22に退役。理由=元glbが単一メッシュ＋半透明マテリアルで、
            透明の描画順が端末のGPU依存になり、正面からでもストラップが文字盤の手前に描かれる破綻を
            CEO実機で確認（デスクトップRTX環境の検証だけでは不十分だった）。先方の閲覧端末を制御できない
-           対外サンプルに描画運ゲーの要素は置けないため、実写マクロの静的表示（旧posterと同素材）へ差し替え。
+           対外サンプルに描画運ゲーの要素は置けないため、同日中に実写マクロ「動画」へ差し替え（CEO指示=静止画でなく動画で期待超え）。
+           動画: assets/video/mvt-macro.mp4（Pexels 11965370・商用可/帰属不要・テンプが実際に時を刻む8秒ループ・
+           2160²中央切出→960²・813KB・無音）。刻印は「SWISS MADE / POWER RESERVE 10 DAYS」の一般表記のみで
+           実ブランド銘なし（v1監査の工場刻印と同じ判定基準で採用。フレーム全域を目視済み）。
+           reduced-motion時は下部scriptで自動再生を止めposter表示。
            glbと関連JS(if(mv)ガード付きで無効化済み)はassets/下に残置＝全周対応の別モデル入手時に復活可能。 -->
       <div class="mv-fallback">
-        <img src="assets/detail-warm.jpg" alt="ムーブメントのマクロ写真。真鍮の歯車と赤い受け石">
+        <video autoplay muted loop playsinline preload="metadata" poster="assets/detail-warm.jpg" aria-label="ムーブメントのマクロ動画。テンプが時を刻み、赤い受け石と真鍮の歯車が光る">
+          <source src="assets/video/mvt-macro.mp4" type="video/mp4">
+          <img src="assets/detail-warm.jpg" alt="ムーブメントのマクロ写真。真鍮の歯車と赤い受け石">
+        </video>
       </div>
       <div class="mv-badge">Calibre MÉRIDANE · Réf. M-1874</div>
     </div>
@@ -707,6 +714,10 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
   //  そこで自動モーションは正面±の上品なアークに限定し、文字盤が常に映えるようにする。
   //  ドラッグ（camera-controls）は全周そのまま＝どの角度からも確かめられる。
   //  reduced-motion時はこの往復を一切起動しない（＝ヒーロー角で静止・ドラッグのみ）。
+  // Immersionの実写マクロ動画: reduced-motion時は自動再生を止めてposter(静止画)のまま
+  var mvVid = document.querySelector(".mv-fallback video");
+  if (mvVid && prefersReduce){ mvVid.removeAttribute("autoplay"); try{ mvVid.pause(); }catch(_){} }
+
   var mv = document.getElementById("mv");
   if (mv){
     var HERO = 0;          // 正面ヒーロー方位角(deg)＝白文字盤が最も映える真正面
