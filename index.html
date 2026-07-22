@@ -574,55 +574,20 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
   <div class="amb-bg" aria-hidden="true"><img src="assets/blueprint.jpg" alt=""></div>
   <div class="wrap">
     <span class="eyebrow">Immersion</span>
-    <h2 class="reveal">時計を、あなたの手で。</h2>
-    <p class="sub reveal"><span class="ph">ドラッグで見回し、</span><span class="ph">手を離せば、</span><span class="ph">静かに揺らぎはじめる。</span><br><span class="ph">手のなかで確かめるように、</span><span class="ph">細部まで、じっくりと。</span></p>
+    <h2 class="reveal">肉眼の、その先へ。</h2>
+    <p class="sub reveal"><span class="ph">受け石の赤、</span><span class="ph">真鍮の光。</span><br><span class="ph">拡大鏡だけが知っている、</span><span class="ph">手仕事の痕跡。</span></p>
 
     <div class="viewer-wrap reveal">
       <div class="viewer-ring" aria-hidden="true"></div>
-      <!-- 実3Dモデル(CC BY 4.0)を <model-viewer> で表示。
-           camera-controls=ドラッグで見回し（min/max-camera-orbitで方位±48°・極角58〜96°にクランプ）。
-           放置中はJSが「正面アーク」を±40°でゆっくり往復（下部script参照）。
-           ※このモデルは時計全体が単一メッシュ＋単一マテリアル（alphaMode:BLEND＋KHR_materials_transmission）で、
-             文字盤は風防ガラスの透過を通してのみ見える構造。透過を切ると風防が曇りガラス化して文字盤を隠し、
-             透過を残すと背面は裏蓋越しに中身が透けて見える（実GPUで実証・qa/v4-report参照）。
-             材質編集だけで表裏両方を綺麗にするのは不可能なため、ドラッグ範囲を「白文字盤が美しく読める前面アーク」に
-             限定し、破綻する背面・真横へは到達させない設計にした（全周表示が必要ならモデル交換が要る＝PM申し送り）。
-           loading="lazy"。読込中および非対応環境では slot="poster"（実写＋ダーク）を表示。
-
-           モデル: assets/3d/VintageWatch.glb（三針ドレスウォッチ・白文字盤ローマ数字・ゴールドケース×
-           茶レザーストラップ・CC BY 4.0 / 作者 uday）。支給の3色版（ゴールド/黒/シルバー横並び）を
-           gltf-transformでゴールド1本に絞り原点へ再センタリングした派生（753KB）。本LPは単一の名品
-           Réf. M-1874 を主役に据える構成のため1本立てが世界観に合致。3色の元ファイルは
-           Karakuri/research/lancers-5575278-watch-lp/VintageWatch_3color_source.glb に保管。
-           ※ このモデルは animations=0（autoplay不可）/ KHR_materials_variants=無（variant-name不可）→ 両属性は外した。
-           ※ Draco+WebP圧縮。model-viewer@3.5.0はデコーダをCDNから読込むため実機で表示確認必須（本セッションで実描画確認済）。
-           ※ カメラ値は正方形ビューワ(1:1・円リング)内での実描画で「白文字盤とローマ数字が最初に美しく正面に収まる」よう詰めた。 -->
-      <model-viewer id="mv"
-        src="assets/3d/VintageWatch.glb"
-        alt="MÉRIDANE の三針ドレスウォッチを3Dで見回すインタラクティブ表示。白文字盤にローマ数字、ゴールドの側と革ストラップ。ドラッグで回転、放置で静かに揺れる"
-        camera-controls
-        camera-orbit="0deg 76deg auto"
-        interpolation-decay="180"
-        field-of-view="30deg"
-        min-camera-orbit="-48deg 58deg auto"
-        max-camera-orbit="48deg 96deg auto"
-        interaction-prompt="none"
-        disable-tap
-        shadow-intensity="1"
-        exposure="1.25"
-        environment-image="neutral"
-        loading="lazy"
-        reveal="auto">
-        <div class="mv-fallback" slot="poster">
-          <img src="assets/detail-warm.jpg" alt="時計のムーブメントのマクロ写真">
-        </div>
-      </model-viewer>
-      <div class="mv-badge">Réf. M-1874 · Or Jaune</div>
-    </div>
-
-    <div class="hint reveal">
-      <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/></svg>
-      Drag to explore · Release to settle
+      <!-- 3D(<model-viewer>)は2026-07-22に退役。理由=元glbが単一メッシュ＋半透明マテリアルで、
+           透明の描画順が端末のGPU依存になり、正面からでもストラップが文字盤の手前に描かれる破綻を
+           CEO実機で確認（デスクトップRTX環境の検証だけでは不十分だった）。先方の閲覧端末を制御できない
+           対外サンプルに描画運ゲーの要素は置けないため、実写マクロの静的表示（旧posterと同素材）へ差し替え。
+           glbと関連JS(if(mv)ガード付きで無効化済み)はassets/下に残置＝全周対応の別モデル入手時に復活可能。 -->
+      <div class="mv-fallback">
+        <img src="assets/detail-warm.jpg" alt="ムーブメントのマクロ写真。真鍮の歯車と赤い受け石">
+      </div>
+      <div class="mv-badge">Calibre MÉRIDANE · Réf. M-1874</div>
     </div>
   </div>
 </section>
@@ -718,13 +683,11 @@ footer .cr{margin-top:18px;font-family:var(--serif);font-size:11px;letter-spacin
 </section>
 
 <footer>
-  <p class="disc">本ページは、開発チーム Karakuri が制作したポートフォリオ用のサンプルです。「MÉRIDANE」は本サンプルのために創作した架空のブランドであり、実在するいかなる時計ブランドとも関係ありません。掲載写真・3Dモデルはブランドの世界観を伝えるためのイメージであり、特定の時計製品の作例を示すものではありません。写真：Unsplash・Pexels（いずれも商用利用可・帰属不要）。詳細な出典は同梱の制作メモに記載しています。</p>
-  <p class="disc" style="margin-top:14px;opacity:.85">3D model: based on “<a href="https://sketchfab.com/3d-models/vintage-watch-7322039aae6642e0a3a9c8361f174dd6" rel="noopener" style="color:var(--muted);text-decoration:underline">Vintage Watch</a>” by <a href="https://sketchfab.com/udayjeet" rel="noopener" style="color:var(--muted);text-decoration:underline">uday</a>, adapted (single colorway) for this sample. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener" style="color:var(--muted);text-decoration:underline">CC BY 4.0</a>.</p>
+  <p class="disc">本ページは、開発チーム Karakuri が制作したポートフォリオ用のサンプルです。「MÉRIDANE」は本サンプルのために創作した架空のブランドであり、実在するいかなる時計ブランドとも関係ありません。掲載写真はブランドの世界観を伝えるためのイメージであり、特定の時計製品の作例を示すものではありません。写真：Unsplash・Pexels（いずれも商用利用可・帰属不要）。詳細な出典は同梱の制作メモに記載しています。</p>
   <div class="cr">Sample brand content · Crafted by Karakuri</div>
 </footer>
 
-<!-- ===== 3D: Google <model-viewer>（CDN・type=module）===== -->
-<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<!-- 3D(model-viewer CDN)は2026-07-22退役＝読込自体を停止（上のImmersionセクション内コメント参照） -->
 
 <!-- ===== GSAP + ScrollTrigger + SplitText + Lenis =====
   結線は自社実測済み試作 Karakuri/portfolio/_lab/gsap-lenis/ から流用。
